@@ -94,6 +94,15 @@
     const savePins = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
     let pins = loadPins();
     let addMode = false;
+let pins = loadPins();
+let addMode = false;
+
+// ---- Pro unlock basics ----
+const PRO_CODE = 'RHGM-2025-PRO';                           // your unlock code
+const BUY_URL  = 'https://www.paypal.com/ncp/payment/4ELF9X644EQZ6';
+let isPro = localStorage.getItem('rghm_pro') === '1';
+
+const markers = new Map(); // id -> marker
     const markers = new Map(); // id -> marker
 
     // ---------- Sources/Layers (raster overlays) ----------
