@@ -74,8 +74,26 @@
 
     // ---------- Map init ----------
     const map = new maplibregl.Map({
+      map.on('error', (e) => {
+  const msg = (e && e.error && e.error.message) ? e.error.message : 'Map error';
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block';
+  setTimeout(()=> t.style.display = 'none', 2500);
+});
       container: 'map',
-      style: 'https://demotiles.maplibre.org/style.json', // free style
+      style: {
+  "version": 8,
+  "sources": {
+    "osm": {
+      "type": "raster",
+      "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      "tileSize": 256,
+      "attribution": "© OpenStreetMap"
+    }
+  },
+  "layers": [
+    { "id": "osm", "type": "raster", "source": "osm" }
+  ]
+},
       center: [-101.7, 43.5], // Buffalo Gap / Ogallala region
       zoom: 7
     });
