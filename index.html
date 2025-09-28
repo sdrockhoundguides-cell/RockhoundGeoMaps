@@ -1,36 +1,34 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>RockhoundGeoMaps • Field PWA</title>
-  <meta name="theme-color" content="#111827" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <style>
-    html, body {height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-    #map {position:fixed; inset:0;}
-    .panel {position:fixed; top:10px; left:10px; z-index:5; background:#111827cc; color:#fff;
-      border-radius:12px; padding:10px; backdrop-filter: blur(6px); max-width: 92vw;}
-    .panel h1 {margin:0 0 6px; font-size:16px;}
-    .row {display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:6px 0;}
-    button, label, select, input[type="file"] {background:#1f2937; color:#fff; border:1px solid #374151;
-      border-radius:10px; padding:8px 10px; font-size:14px;}
-    button:hover {background:#374151; cursor:pointer;}
-    .pill {padding:6px 10px; border-radius:999px; font-size:13px;}
-    .marker { width:14px; height:14px; border:2px solid #fff; border-radius:50%; background:#ef4444; box-shadow:0 1px 6px rgba(0,0,0,.35); }
-    .popup {max-width:260px;}
-    .popup img {max-width:100%; border-radius:8px; margin-top:6px;}
-    .toast {position:fixed; bottom:12px; left:50%; transform:translateX(-50%); background:#111827cc; color:#fff;
-      padding:8px 12px; border-radius:10px; z-index:6; display:none;}
-    .attribution {position:fixed; right:10px; bottom:10px; z-index:4; font-size:11px; background:#111827cc; color:#e5e7eb; padding:6px 8px; border-radius:8px;}
-    a, a:visited {color:#93c5fd;}
-    #importFile,#photoFile{display:none;}
-  </style>
-
-  <!-- MapLibre -->
+  <meta name="theme-color" content="#111827"/>
   <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet"/>
   <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+  <style>
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    #map{position:fixed;inset:0}
+    .panel{position:fixed;top:10px;left:10px;z-index:5;background:#111827cc;color:#fff;
+      border-radius:12px;padding:10px;backdrop-filter:blur(6px);max-width:92vw}
+    .panel h1{margin:0 0 6px;font-size:16px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+    button,label,select,input[type="file"]{background:#1f2937;color:#fff;border:1px solid #374151;
+      border-radius:10px;padding:8px 10px;font-size:14px}
+    button:hover{background:#374151;cursor:pointer}
+    .pill{padding:6px 10px;border-radius:999px;font-size:13px}
+    .marker{width:14px;height:14px;border:2px solid #fff;border-radius:50%;background:#ef4444;
+      box-shadow:0 1px 6px rgba(0,0,0,.35)}
+    .popup{max-width:240px}
+    .popup img{max-width:100%;border-radius:8px;margin-top:6px}
+    .toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#111827cc;color:#fff;
+      padding:8px 12px;border-radius:10px;z-index:6;display:none}
+    .attribution{position:fixed;right:10px;bottom:10px;z-index:4;font-size:11px;background:#111827cc;
+      color:#e5e7eb;padding:6px 8px;border-radius:8px}
+    a,a:visited{color:#93c5fd}
+    #importFile{display:none}
+  </style>
 </head>
 <body>
   <div id="map"></div>
@@ -40,6 +38,7 @@
     <div class="row">
       <button id="locBtn">📍 Follow Me</button>
       <button id="addBtn" title="Tap map to drop pins">🪨 Add Pin</button>
+      <button id="baseBtn">🗺️ Base: Streets</button>
       <button id="toggleTopo">🗺️ USGS Topo: OFF</button>
       <button id="toggleFEMA">🌊 FEMA Flood: OFF</button>
       <button id="toggleBLM">🏞️ BLM Public Lands: OFF</button>
@@ -47,67 +46,63 @@
     <div class="row">
       <button id="exportBtn">💾 Export</button>
       <label class="pill" for="importFile">📥 Import</label>
-      <input type="file" id="importFile" accept=".json" />
+      <input type="file" id="importFile" accept=".json"/>
       <button id="aiBtn" title="Placeholder – wire to AI later">🤖 ID Rock (beta)</button>
       <button id="proBtn" title="Upgrade to Pro features">💎 Go Pro</button>
-      <input type="file" id="photoFile" accept="image/*" />
     </div>
-    <div class="row" style="font-size:12px; opacity:.85;">
+    <div class="row" style="font-size:12px;opacity:.85">
       Tip: Tap <b>Add Pin</b>, then click the map. Pins save to this device (offline-friendly). Export for backup.
     </div>
   </div>
 
   <div class="attribution">
-    Basemaps © <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> •
-    Topo © <a href="https://www.usgs.gov/" target="_blank">USGS</a> •
-    Flood data © <a href="https://msc.fema.gov/" target="_blank">FEMA</a> •
-    Public lands © <a href="https://www.blm.gov/" target="_blank">BLM</a>
+    Streets © OpenStreetMap • Satellite © Esri • Topo © USGS • Flood © FEMA • Public lands © BLM
   </div>
 
   <div id="toast" class="toast"></div>
 
   <script>
-    // -------- Service worker registration (for install + offline shell)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(()=>{});
-      });
-    }
-
-    // ---------- Utilities ----------
-    const toast = (msg) => {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.style.display = 'block';
-      setTimeout(()=> t.style.display = 'none', 2000);
-    };
+    // ---------- Toast helper ----------
+    const toast = (msg)=>{const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+      setTimeout(()=>t.style.display='none',2000)};
 
     // ---------- Map init ----------
+    const styleObj = {
+      version: 8,
+      sources: {
+        streets: {
+          type: "raster",
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: "© OpenStreetMap"
+        },
+        satellite: {
+          type: "raster",
+          tiles: ["https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+          tileSize: 256,
+          attribution: "Esri World Imagery"
+        }
+      },
+      layers: [
+        { id: "streets", type: "raster", source: "streets", layout: { visibility: "visible" } },
+        { id: "satellite", type: "raster", source: "satellite", layout: { visibility: "none" } }
+      ]
+    };
+
     const map = new maplibregl.Map({
       container: 'map',
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors"
-          }
-        },
-        layers: [{ id: "osm", type: "raster", source: "osm" }]
-      },
+      style: styleObj,
       center: [-101.7, 43.5],
-      zoom: 7
+      zoom: 6.5,
+      minZoom: 2,
+      maxZoom: 19,     // <- higher ceiling so you can zoom way in
+      hash: true       // <- URL remembers viewpoint
     });
 
-    map.on('error', (e) => {
-      const msg = (e && e.error && e.error.message) ? e.error.message : 'Map error';
-      toast(msg);
-      console.error('Map error:', e);
-    });
+    map.on('error', e => console.warn('Map error:', e));
 
+    // Basic controls
     map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
     const geolocate = new maplibregl.GeolocateControl({
       positionOptions: { enableHighAccuracy: true },
       trackUserLocation: true, showUserHeading: true
@@ -115,517 +110,166 @@
     map.addControl(geolocate, 'bottom-right');
 
     // ---------- Local storage for pins ----------
-    const LS_KEY = 'rghm_pins_v1';
-    const loadPins = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); } catch { return []; } };
-    const savePins = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    let pins = loadPins();
-    let addMode = false;
+    const LS_KEY='rghm_pins_v1';
+    const loadPins=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch{return[]}};
+    const savePins=(arr)=>localStorage.setItem(LS_KEY,JSON.stringify(arr));
+    let pins=loadPins();
+    let addMode=false;
 
-    // ---------- Pro unlock basics (stub) ----------
-    const PRO_CODE = 'RHGM-2025-PRO';
-    const BUY_URL  = 'https://www.paypal.com/ncp/payment/4ELF9X644EQZ6';
-    let isPro = localStorage.getItem('rghm_pro') === '1';
-
-    // ---------- Raster overlays ----------
-    const SOURCES = {
-      topo: {
-        id: 'usgs-topo',
-        url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'usgs-topo-layer',
-        labelBtn: 'toggleTopo'
-      },
-      // Note: FEMA + BLM often block anonymous CORS. We try; if blocked, we show a toast and keep going.
-      fema: {
-        id: 'fema-nfhl',
-        url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'fema-nfhl-layer',
-        labelBtn: 'toggleFEMA'
-      },
-      blm: {
-        id: 'blm-sma',
-        url: 'https://gis.blm.gov/arcgis/rest/services/lands/BLM_Natl_SMA/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'blm-sma-layer',
-        labelBtn: 'toggleBLM'
-      }
+    // ---------- Overlays ----------
+    // (Added after map load so errors don’t block the page)
+    const OVERLAYS = {
+      topo: { id:'usgs-topo', layer:'usgs-topo-layer',
+              url:'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}' },
+      fema: { id:'fema-nfhl', layer:'fema-nfhl-layer',
+              url:'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/tile/{z}/{y}/{x}' },
+      blm:  { id:'blm-sma', layer:'blm-sma-layer',
+              url:'https://gis.blm.gov/arcgis/rest/services/lands/BLM_Natl_SMA/MapServer/tile/{z}/{y}/{x}' }
     };
-    const visibility = { topo:false, fema:false, blm:false };
+    const vis={topo:false,fema:false,blm:false};
 
-    map.on('load', () => {
-      for (const key of Object.keys(SOURCES)) {
-        const s = SOURCES[key];
-        try {
-          map.addSource(s.id, { type: 'raster', tiles: [s.url], tileSize: 256, scheme: 'xyz',
-            attribution: key === 'topo' ? 'USGS' : key === 'fema' ? 'FEMA' : 'BLM'
-          });
-          map.addLayer({ id: s.layerId, type: 'raster', source: s.id, layout: { visibility: 'none' } });
-        } catch (e) {
-          console.warn('Layer add failed', key, e);
-          toast(`Couldn’t load ${key.toUpperCase()} layer (CORS)`);
-        }
-      }
+    map.on('load', ()=>{
+      // Add overlays
+      Object.values(OVERLAYS).forEach(s=>{
+        try{
+          map.addSource(s.id,{type:'raster',tiles:[s.url],tileSize:256});
+          map.addLayer({id:s.layer,type:'raster',source:s.id,layout:{visibility:'none'}});
+        }catch(err){ console.warn('Overlay load failed',s.id,err); }
+      });
+      // Draw existing pins
       pins.forEach(addMarkerToMap);
     });
 
-    // ---------- Marker logic ----------
-    const markers = new Map();
-    const newId = () => Math.random().toString(36).slice(2, 9);
+    // ---------- Markers / pins ----------
+    const markers=new Map();
+    const newId=()=>Math.random().toString(36).slice(2,9);
 
-    function addMarkerToMap(p) {
-      const el = document.createElement('div'); el.className = 'marker';
-      const m = new maplibregl.Marker({ element: el })
-        .setLngLat([p.lng, p.lat])
+    function addMarkerToMap(p){
+      const el=document.createElement('div'); el.className='marker';
+      const m=new maplibregl.Marker({element:el})
+        .setLngLat([p.lng,p.lat])
         .setPopup(makePopup(p))
         .addTo(map);
-      markers.set(p.id, m);
+      markers.set(p.id,m);
     }
 
-    function makePopup(p) {
-      const d = document.createElement('div');
-      d.className = 'popup';
-      d.innerHTML = `
-        <b>${p.title || 'Rock/Fossil Pin'}</b><br/>
+    function makePopup(p){
+      const d=document.createElement('div'); d.className='popup';
+      d.innerHTML=`
+        <b>${p.title||'Rock/Fossil Pin'}</b><br/>
         <small>${new Date(p.ts).toLocaleString()}</small><br/>
-        ${p.note ? `<div>${p.note}</div>` : ''}
-        ${p.photo ? `<img src="${p.photo}" alt="pin photo"/>` : ''}
-        <div style="margin-top:8px; display:flex; gap:6px;">
+        ${p.note?`<div>${p.note}</div>`:''}
+        ${p.photo?`<img src="${p.photo}" alt="pin photo">`:''}
+        <div style="margin-top:8px;display:flex;gap:6px">
           <button id="edit-${p.id}">Edit</button>
           <button id="del-${p.id}">Delete</button>
         </div>`;
-      setTimeout(() => {
-        document.getElementById(`del-${p.id}`).onclick = () => {
-          pins = pins.filter(x => x.id !== p.id);
-          savePins(pins);
-          markers.get(p.id)?.remove();
-          markers.delete(p.id);
-          toast('Pin deleted');
+      setTimeout(()=>{
+        const del=document.getElementById(`del-${p.id}`);
+        const edt=document.getElementById(`edit-${p.id}`);
+        if(del) del.onclick=()=>{
+          pins=pins.filter(x=>x.id!==p.id); savePins(pins);
+          markers.get(p.id)?.remove(); markers.delete(p.id); toast('Pin deleted');
         };
-        document.getElementById(`edit-${p.id}`).onclick = () => editPin(p.id);
-      }, 0);
-      return new maplibregl.Popup({ offset: 16 }).setDOMContent(d);
+        if(edt) edt.onclick=()=>editPin(p.id);
+      },0);
+      return new maplibregl.Popup({offset:16}).setDOMContent(d);
     }
 
-    // Persistent, user-gesture file input (more reliable on mobile)
-    const photoInput = document.getElementById('photoFile');
-    function choosePhoto() {
-      return new Promise((resolve) => {
-        const done = (file) => {
-          if (!file) return resolve('');
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(file);
-        };
-        photoInput.onchange = (e) => done(e.target.files[0]);
-        photoInput.click();
-      });
+    async function promptForPinMeta(existing={}){
+      const title=prompt('Title:', existing.title||'Find');
+      if(title===null) return null;
+      const note=prompt('Notes:', existing.note||'');
+      let photoData=existing.photo||'';
+      try{
+        const file=await new Promise(res=>{
+          const input=document.createElement('input');
+          input.type='file'; input.accept='image/*';
+          input.onchange=()=>res(input.files[0]||null); input.click();
+        });
+        if(file){
+          const rd=new FileReader();
+          rd.onload=()=>photoData=rd.result; rd.readAsDataURL(file);
+          await new Promise(r=>rd.onloadend=r);
+        }
+      }catch(_){}
+      return {title,note,photo:photoData};
     }
 
-    async function promptForPinMeta(existing = {}) {
-      const title = prompt('Title:', existing.title || 'Find');
-      if (title === null) return null;
-      const note = prompt('Notes:', existing.note || '');
-      let photoData = existing.photo || '';
-      if (confirm('Attach a photo?')) {
-        photoData = await choosePhoto();
-      }
-      return { title, note, photo: photoData };
+    async function editPin(id){
+      const i=pins.findIndex(p=>p.id===id); if(i===-1) return;
+      const meta=await promptForPinMeta(pins[i]); if(!meta) return;
+      Object.assign(pins[i],meta); savePins(pins);
+      markers.get(id)?.setPopup(makePopup(pins[i])); toast('Pin updated');
     }
 
-    async function editPin(id) {
-      const idx = pins.findIndex(p => p.id === id);
-      if (idx === -1) return;
-      const meta = await promptForPinMeta(pins[idx]);
-      if (!meta) return;
-      Object.assign(pins[idx], meta);
-      savePins(pins);
-      markers.get(id)?.setPopup(makePopup(pins[idx]));
-      toast('Pin updated');
-    }
+    // ---------- UI bindings ----------
+    document.getElementById('locBtn').onclick=()=>geolocate.trigger();
 
-    // ---------- UI Bindings ----------
-    const bindToggle = (key, labelId, labelText) => {
-      const btn = document.getElementById(labelId);
-      btn.onclick = () => {
-        const layerId = SOURCES[key].layerId;
-        if (!map.getLayer(layerId)) return toast('Layer not ready yet…');
-        visibility[key] = !visibility[key];
-        map.setLayoutProperty(layerId, 'visibility', visibility[key] ? 'visible' : 'none');
-        btn.textContent = `${labelText}: ${visibility[key] ? 'ON' : 'OFF'}`;
+    document.getElementById('addBtn').onclick=()=>{
+      addMode=!addMode;
+      document.getElementById('addBtn').textContent=addMode?'✅ Tap Map':'🪨 Add Pin';
+      toast(addMode?'Tap the map to place a pin':'Add mode off');
+    };
+
+    // base layer toggle (streets <-> satellite)
+    let baseIsSatellite=false;
+    document.getElementById('baseBtn').onclick=()=>{
+      baseIsSatellite=!baseIsSatellite;
+      map.setLayoutProperty('streets','visibility', baseIsSatellite?'none':'visible');
+      map.setLayoutProperty('satellite','visibility', baseIsSatellite?'visible':'none');
+      document.getElementById('baseBtn').textContent = baseIsSatellite ? '🗺️ Base: Satellite' : '🗺️ Base: Streets';
+    };
+
+    // overlay toggles
+    const bindToggle=(key,btnId,label)=>{
+      document.getElementById(btnId).onclick=()=>{
+        vis[key]=!vis[key];
+        map.setLayoutProperty(OVERLAYS[key].layer,'visibility', vis[key]?'visible':'none');
+        document.getElementById(btnId).textContent = `${label}: ${vis[key]?'ON':'OFF'}`;
       };
     };
-    bindToggle('topo', 'toggleTopo', '🗺️ USGS Topo');
-    bindToggle('fema', 'toggleFEMA','🌊 FEMA Flood');
-    bindToggle('blm',  'toggleBLM', '🏞️ BLM Public Lands');
+    bindToggle('topo','toggleTopo','🗺️ USGS Topo');
+    bindToggle('fema','toggleFEMA','🌊 FEMA Flood');
+    bindToggle('blm','toggleBLM','🏞️ BLM Public Lands');
 
-    document.getElementById('locBtn').onclick = () => {
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        toast('Geolocate needs HTTPS or localhost');
-      }
-      geolocate.trigger();
-    };
-
-    document.getElementById('addBtn').onclick = () => {
-      addMode = !addMode;
-      document.getElementById('addBtn').textContent = addMode ? '✅ Tap Map' : '🪨 Add Pin';
-      toast(addMode ? 'Tap the map to place a pin' : 'Add mode off');
-    };
-
-    map.on('click', async (e) => {
-      if (!addMode) return;
-      const meta = await promptForPinMeta();
-      if (!meta) return;
-      const p = { id: newId(), lat: e.lngLat.lat, lng: e.lngLat.lng, ts: Date.now(), ...meta };
-      pins.push(p); savePins(pins); addMarkerToMap(p);
-      addMode = false; document.getElementById('addBtn').textContent = '🪨 Add Pin';
+    // click to add a pin when in addMode
+    map.on('click', async (e)=>{
+      if(!addMode) return;
+      const meta=await promptForPinMeta(); if(!meta) return;
+      const p={id:newId(),lat:e.lngLat.lat,lng:e.lngLat.lng,ts:Date.now(),...meta};
+      pins.push(p); savePins(p); addMarkerToMap(p);
+      addMode=false; document.getElementById('addBtn').textContent='🪨 Add Pin';
       toast('Pin added');
     });
 
-    document.getElementById('exportBtn').onclick = () => {
-      const blob = new Blob([JSON.stringify(pins, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'rockhoundgeomaps_pins.json'; a.click();
+    // export / import
+    document.getElementById('exportBtn').onclick=()=>{
+      const blob=new Blob([JSON.stringify(pins,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='rockhoundgeomaps_pins.json'; a.click();
       URL.revokeObjectURL(url);
     };
 
-    document.getElementById('importFile').onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          if (!Array.isArray(data)) throw new Error('Invalid JSON');
-          // wipe and rebuild
-          markers.forEach(m => m.remove());
-          markers.clear();
-          pins = data;
-          savePins(pins);
-          pins.forEach(addMarkerToMap);
+    document.getElementById('importFile').onchange=(e)=>{
+      const file=e.target.files[0]; if(!file) return;
+      const rd=new FileReader();
+      rd.onload=()=>{
+        try{
+          const data=JSON.parse(rd.result);
+          if(!Array.isArray(data)) throw new Error('Invalid JSON');
+          // clear existing markers
+          markers.forEach(m=>m.remove()); markers.clear();
+          pins=data; savePins(pins); pins.forEach(addMarkerToMap);
           toast('Imported pins');
-        } catch (err) {
-          toast('Import failed');
-        }
+        }catch(err){ toast('Import failed'); }
       };
-      reader.readAsText(file);
+      rd.readAsText(file);
     };
 
-    document.getElementById('aiBtn').onclick = () => toast('AI Rock ID is coming soon!');
-    document.getElementById('proBtn').onclick = () => window.open(BUY_URL, '_blank');
-  </script>
-</body>
-</html><!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RockhoundGeoMaps • Field PWA</title>
-  <meta name="theme-color" content="#111827" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <style>
-    html, body {height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-    #map {position:fixed; inset:0;}
-    .panel {position:fixed; top:10px; left:10px; z-index:5; background:#111827cc; color:#fff;
-      border-radius:12px; padding:10px; backdrop-filter: blur(6px); max-width: 92vw;}
-    .panel h1 {margin:0 0 6px; font-size:16px;}
-    .row {display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:6px 0;}
-    button, label, select, input[type="file"] {background:#1f2937; color:#fff; border:1px solid #374151;
-      border-radius:10px; padding:8px 10px; font-size:14px;}
-    button:hover {background:#374151; cursor:pointer;}
-    .pill {padding:6px 10px; border-radius:999px; font-size:13px;}
-    .marker { width:14px; height:14px; border:2px solid #fff; border-radius:50%; background:#ef4444; box-shadow:0 1px 6px rgba(0,0,0,.35); }
-    .popup {max-width:260px;}
-    .popup img {max-width:100%; border-radius:8px; margin-top:6px;}
-    .toast {position:fixed; bottom:12px; left:50%; transform:translateX(-50%); background:#111827cc; color:#fff;
-      padding:8px 12px; border-radius:10px; z-index:6; display:none;}
-    .attribution {position:fixed; right:10px; bottom:10px; z-index:4; font-size:11px; background:#111827cc; color:#e5e7eb; padding:6px 8px; border-radius:8px;}
-    a, a:visited {color:#93c5fd;}
-    #importFile,#photoFile{display:none;}
-  </style>
-
-  <!-- MapLibre -->
-  <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet"/>
-  <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
-</head>
-<body>
-  <div id="map"></div>
-
-  <div class="panel">
-    <h1>RockhoundGeoMaps</h1>
-    <div class="row">
-      <button id="locBtn">📍 Follow Me</button>
-      <button id="addBtn" title="Tap map to drop pins">🪨 Add Pin</button>
-      <button id="toggleTopo">🗺️ USGS Topo: OFF</button>
-      <button id="toggleFEMA">🌊 FEMA Flood: OFF</button>
-      <button id="toggleBLM">🏞️ BLM Public Lands: OFF</button>
-    </div>
-    <div class="row">
-      <button id="exportBtn">💾 Export</button>
-      <label class="pill" for="importFile">📥 Import</label>
-      <input type="file" id="importFile" accept=".json" />
-      <button id="aiBtn" title="Placeholder – wire to AI later">🤖 ID Rock (beta)</button>
-      <button id="proBtn" title="Upgrade to Pro features">💎 Go Pro</button>
-      <input type="file" id="photoFile" accept="image/*" />
-    </div>
-    <div class="row" style="font-size:12px; opacity:.85;">
-      Tip: Tap <b>Add Pin</b>, then click the map. Pins save to this device (offline-friendly). Export for backup.
-    </div>
-  </div>
-
-  <div class="attribution">
-    Basemaps © <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> •
-    Topo © <a href="https://www.usgs.gov/" target="_blank">USGS</a> •
-    Flood data © <a href="https://msc.fema.gov/" target="_blank">FEMA</a> •
-    Public lands © <a href="https://www.blm.gov/" target="_blank">BLM</a>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    // -------- Service worker registration (for install + offline shell)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(()=>{});
-      });
-    }
-
-    // ---------- Utilities ----------
-    const toast = (msg) => {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.style.display = 'block';
-      setTimeout(()=> t.style.display = 'none', 2000);
-    };
-
-    // ---------- Map init ----------
-    const map = new maplibregl.Map({
-      container: 'map',
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: "raster",
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: "© OpenStreetMap contributors"
-          }
-        },
-        layers: [{ id: "osm", type: "raster", source: "osm" }]
-      },
-      center: [-101.7, 43.5],
-      zoom: 7
-    });
-
-    map.on('error', (e) => {
-      const msg = (e && e.error && e.error.message) ? e.error.message : 'Map error';
-      toast(msg);
-      console.error('Map error:', e);
-    });
-
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
-    const geolocate = new maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true, showUserHeading: true
-    });
-    map.addControl(geolocate, 'bottom-right');
-
-    // ---------- Local storage for pins ----------
-    const LS_KEY = 'rghm_pins_v1';
-    const loadPins = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); } catch { return []; } };
-    const savePins = (arr) => localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    let pins = loadPins();
-    let addMode = false;
-
-    // ---------- Pro unlock basics (stub) ----------
-    const PRO_CODE = 'RHGM-2025-PRO';
-    const BUY_URL  = 'https://www.paypal.com/ncp/payment/4ELF9X644EQZ6';
-    let isPro = localStorage.getItem('rghm_pro') === '1';
-
-    // ---------- Raster overlays ----------
-    const SOURCES = {
-      topo: {
-        id: 'usgs-topo',
-        url: 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'usgs-topo-layer',
-        labelBtn: 'toggleTopo'
-      },
-      // Note: FEMA + BLM often block anonymous CORS. We try; if blocked, we show a toast and keep going.
-      fema: {
-        id: 'fema-nfhl',
-        url: 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'fema-nfhl-layer',
-        labelBtn: 'toggleFEMA'
-      },
-      blm: {
-        id: 'blm-sma',
-        url: 'https://gis.blm.gov/arcgis/rest/services/lands/BLM_Natl_SMA/MapServer/tile/{z}/{y}/{x}',
-        layerId: 'blm-sma-layer',
-        labelBtn: 'toggleBLM'
-      }
-    };
-    const visibility = { topo:false, fema:false, blm:false };
-
-    map.on('load', () => {
-      for (const key of Object.keys(SOURCES)) {
-        const s = SOURCES[key];
-        try {
-          map.addSource(s.id, { type: 'raster', tiles: [s.url], tileSize: 256, scheme: 'xyz',
-            attribution: key === 'topo' ? 'USGS' : key === 'fema' ? 'FEMA' : 'BLM'
-          });
-          map.addLayer({ id: s.layerId, type: 'raster', source: s.id, layout: { visibility: 'none' } });
-        } catch (e) {
-          console.warn('Layer add failed', key, e);
-          toast(`Couldn’t load ${key.toUpperCase()} layer (CORS)`);
-        }
-      }
-      pins.forEach(addMarkerToMap);
-    });
-
-    // ---------- Marker logic ----------
-    const markers = new Map();
-    const newId = () => Math.random().toString(36).slice(2, 9);
-
-    function addMarkerToMap(p) {
-      const el = document.createElement('div'); el.className = 'marker';
-      const m = new maplibregl.Marker({ element: el })
-        .setLngLat([p.lng, p.lat])
-        .setPopup(makePopup(p))
-        .addTo(map);
-      markers.set(p.id, m);
-    }
-
-    function makePopup(p) {
-      const d = document.createElement('div');
-      d.className = 'popup';
-      d.innerHTML = `
-        <b>${p.title || 'Rock/Fossil Pin'}</b><br/>
-        <small>${new Date(p.ts).toLocaleString()}</small><br/>
-        ${p.note ? `<div>${p.note}</div>` : ''}
-        ${p.photo ? `<img src="${p.photo}" alt="pin photo"/>` : ''}
-        <div style="margin-top:8px; display:flex; gap:6px;">
-          <button id="edit-${p.id}">Edit</button>
-          <button id="del-${p.id}">Delete</button>
-        </div>`;
-      setTimeout(() => {
-        document.getElementById(`del-${p.id}`).onclick = () => {
-          pins = pins.filter(x => x.id !== p.id);
-          savePins(pins);
-          markers.get(p.id)?.remove();
-          markers.delete(p.id);
-          toast('Pin deleted');
-        };
-        document.getElementById(`edit-${p.id}`).onclick = () => editPin(p.id);
-      }, 0);
-      return new maplibregl.Popup({ offset: 16 }).setDOMContent(d);
-    }
-
-    // Persistent, user-gesture file input (more reliable on mobile)
-    const photoInput = document.getElementById('photoFile');
-    function choosePhoto() {
-      return new Promise((resolve) => {
-        const done = (file) => {
-          if (!file) return resolve('');
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(file);
-        };
-        photoInput.onchange = (e) => done(e.target.files[0]);
-        photoInput.click();
-      });
-    }
-
-    async function promptForPinMeta(existing = {}) {
-      const title = prompt('Title:', existing.title || 'Find');
-      if (title === null) return null;
-      const note = prompt('Notes:', existing.note || '');
-      let photoData = existing.photo || '';
-      if (confirm('Attach a photo?')) {
-        photoData = await choosePhoto();
-      }
-      return { title, note, photo: photoData };
-    }
-
-    async function editPin(id) {
-      const idx = pins.findIndex(p => p.id === id);
-      if (idx === -1) return;
-      const meta = await promptForPinMeta(pins[idx]);
-      if (!meta) return;
-      Object.assign(pins[idx], meta);
-      savePins(pins);
-      markers.get(id)?.setPopup(makePopup(pins[idx]));
-      toast('Pin updated');
-    }
-
-    // ---------- UI Bindings ----------
-    const bindToggle = (key, labelId, labelText) => {
-      const btn = document.getElementById(labelId);
-      btn.onclick = () => {
-        const layerId = SOURCES[key].layerId;
-        if (!map.getLayer(layerId)) return toast('Layer not ready yet…');
-        visibility[key] = !visibility[key];
-        map.setLayoutProperty(layerId, 'visibility', visibility[key] ? 'visible' : 'none');
-        btn.textContent = `${labelText}: ${visibility[key] ? 'ON' : 'OFF'}`;
-      };
-    };
-    bindToggle('topo', 'toggleTopo', '🗺️ USGS Topo');
-    bindToggle('fema', 'toggleFEMA','🌊 FEMA Flood');
-    bindToggle('blm',  'toggleBLM', '🏞️ BLM Public Lands');
-
-    document.getElementById('locBtn').onclick = () => {
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        toast('Geolocate needs HTTPS or localhost');
-      }
-      geolocate.trigger();
-    };
-
-    document.getElementById('addBtn').onclick = () => {
-      addMode = !addMode;
-      document.getElementById('addBtn').textContent = addMode ? '✅ Tap Map' : '🪨 Add Pin';
-      toast(addMode ? 'Tap the map to place a pin' : 'Add mode off');
-    };
-
-    map.on('click', async (e) => {
-      if (!addMode) return;
-      const meta = await promptForPinMeta();
-      if (!meta) return;
-      const p = { id: newId(), lat: e.lngLat.lat, lng: e.lngLat.lng, ts: Date.now(), ...meta };
-      pins.push(p); savePins(pins); addMarkerToMap(p);
-      addMode = false; document.getElementById('addBtn').textContent = '🪨 Add Pin';
-      toast('Pin added');
-    });
-
-    document.getElementById('exportBtn').onclick = () => {
-      const blob = new Blob([JSON.stringify(pins, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'rockhoundgeomaps_pins.json'; a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    document.getElementById('importFile').onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result);
-          if (!Array.isArray(data)) throw new Error('Invalid JSON');
-          // wipe and rebuild
-          markers.forEach(m => m.remove());
-          markers.clear();
-          pins = data;
-          savePins(pins);
-          pins.forEach(addMarkerToMap);
-          toast('Imported pins');
-        } catch (err) {
-          toast('Import failed');
-        }
-      };
-      reader.readAsText(file);
-    };
-
-    document.getElementById('aiBtn').onclick = () => toast('AI Rock ID is coming soon!');
-    document.getElementById('proBtn').onclick = () => window.open(BUY_URL, '_blank');
+    // misc buttons
+    document.getElementById('aiBtn').onclick=()=>toast('AI Rock ID is coming soon!');
+    document.getElementById('proBtn').onclick=()=>window.open('https://www.paypal.com/ncp/payment/4ELF9X644EQZ6','_blank');
   </script>
 </body>
 </html>
